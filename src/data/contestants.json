@@ -1,0 +1,13 @@
+[
+  { "name": "Patience",   "image": "assets/contestants/patience.JPG"   },
+  { "name": "Taneshia",   "image": "assets/contestants/taneshia.JPG"   },
+  { "name": "Benedicta",  "image": "assets/contestants/benedicta.JPG"  },
+  { "name": "Aseye",      "image": "assets/contestants/aseye.JPG"      },
+  { "name": "Priscilla",  "image": "assets/contestants/priscilla.JPG"  },
+  { "name": "Sophia",     "image": "assets/contestants/sophia.JPG"     },
+  { "name": "Gabriella",  "image": "assets/contestants/gabriella.JPG"  },
+  { "name": "Christiana", "image": "assets/contestants/christiana.JPG" },
+  { "name": "Vera",       "image": "assets/contestants/vera.JPG"       },
+  { "name": "Claudia",    "image": "assets/contestants/claudia.jpg"    },
+  { "name": "Michelle",   "image": "assets/contestants/michelle.jpg"   }
+]
