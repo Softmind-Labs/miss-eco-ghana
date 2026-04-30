@@ -265,9 +265,37 @@
                     object-position: 70% top;
                 }
                 .hero-section {
-                    padding-top: 120px;
-                    padding-bottom: 40px;
+                    height: 88vh;
+                    padding-top: 80px;
+                    padding-bottom: 0;
                 }
+            }
+
+            /* ── Hero text visibility fix for mobile ── */
+            @media (max-width: 479px) {
+                .hero-wrap {
+                    visibility: visible !important;
+                }
+                .hero-title,
+                .banner-para {
+                    opacity: 1 !important;
+                }
+                .hero-bottom-bar {
+                    display: none !important;
+                }
+            }
+
+            /* ── Fix Webflow opacity:0 not animating (winners/Michelle section all screens) ── */
+            .banner-section {
+                opacity: 1 !important;
+            }
+            [data-w-id="winners-heading"] {
+                opacity: 1 !important;
+                display: block !important;
+                max-width: none !important;
+            }
+            [data-w-id="winners-heading"] .section-title-span {
+                padding-left: 0 !important;
             }
 
             /* ── Winners: Michelle card mobile ── */
