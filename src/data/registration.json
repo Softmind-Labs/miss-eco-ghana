@@ -1,5 +1,5 @@
 {
-  "functionUrl": "https://<project-ref>.supabase.co/functions/v1/register",
+  "functionUrl": "https://eisqaarydwtsarlghdjs.supabase.co/functions/v1/register",
   "maxPhotoBytes": 10485760,
   "tiers": [
     {

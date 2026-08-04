@@ -10,6 +10,8 @@
         <meta content="width=device-width, initial-scale=1" name="viewport"/>
         <meta content="Webflow" name="generator"/>
         <link href="style.css" rel="stylesheet" type="text/css"/>
+        <!-- Start the hero (LCP) fetch during head parsing, before the img tag is reached. -->
+        <link rel="preload" as="image" href="assets/hero-2.jpeg" fetchpriority="high"/>
         <style>
             @media (min-width: 992px) {
                 html.w-mod-js:not(.w-mod-ix) [data-w-id="19ec17b1-7120-edc2-ea55-fbe8d701610a"] {
@@ -534,7 +536,10 @@
                 </div>
             </div>
 
-            <img src="assets/hero-2.jpeg" loading="lazy" sizes="(max-width: 1440px) 100vw, 1440px" alt="Miss Eco Ghana" class="hero-bg-img"/>
+            <!-- This is the LCP element. It must NOT be lazy — lazy defers the fetch until
+                 after layout, which is the single biggest delay on the homepage. Paired with
+                 a rel=preload in the shell head. -->
+            <img src="assets/hero-2.jpeg" loading="eager" fetchpriority="high" decoding="async" sizes="(max-width: 1440px) 100vw, 1440px" alt="Miss Eco Ghana" class="hero-bg-img"/>
             <div class="hero-bottom-bg"></div>
         </section>
 
@@ -1171,9 +1176,9 @@
         <section class="ticker-section">
             <div data-w-id="7c286e25-7644-6055-ab57-64aa78fc36f7" class="ticker-wrap">
                 <div class="ticker-list">
-                    <img src="assets/imdisplay1.jpeg" loading="lazy" alt="Image" class="ticker-img"/>
+                    <img src="assets/finalists.jpeg" loading="lazy" alt="Image" class="ticker-img"/>
                     <img src="assets/hero-2.jpeg" loading="lazy" alt="Image" class="ticker-img _1"/>
-                    <img src="assets/imdisplay2.jpeg" loading="lazy" alt="Image" class="ticker-img"/>
+                    <img src="assets/hero-m.jpeg" loading="lazy" alt="Image" class="ticker-img"/>
                     <img src="assets/imdisplay3.jpeg" loading="lazy" alt="Image" class="ticker-img _1"/>
                     <img src="assets/hero-mobile.jpg" loading="lazy" alt="Image" class="ticker-img"/>
                     <img src="assets/image-2.jpg" loading="lazy" alt="Image" class="ticker-img _1"/>

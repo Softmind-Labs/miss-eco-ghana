@@ -603,6 +603,14 @@
                 color: var(--color--neutral-03);
                 line-height: 1.6;
             }
+            .reg-success-note {
+                margin: 14px 0 0;
+                padding-top: 14px;
+                border-top: 1px solid #cacaca;
+                color: #c0392b;
+                font-size: 0.9rem;
+                line-height: 1.6;
+            }
 
             @media (max-width: 767px) {
                 .reg-page-intro {
@@ -953,6 +961,7 @@
                     <div class="reg-success" data-reg-success hidden>
                         <h3 class="reg-success-title">Registration received</h3>
                         <p class="reg-success-body">Thank you for entering Miss Eco Ghana. Our team will be in touch by email with your screening details.</p>
+                        <p class="reg-success-note" data-reg-success-note hidden></p>
                     </div>
                 </div>
             </div>
@@ -1019,7 +1028,7 @@
         <script src="https://cdn.prod.website-files.com/6868cd37a164c17aef4e0971/js/webflow.schunk.ef125cc813189513.js" type="text/javascript"></script>
         <script src="https://cdn.prod.website-files.com/6868cd37a164c17aef4e0971/js/webflow.schunk.dc5993e77e4ab606.js" type="text/javascript"></script>
         <script src="https://cdn.prod.website-files.com/6868cd37a164c17aef4e0971/js/webflow.5973d4a8.547cef113499866e.js" type="text/javascript"></script>
-        <script>window.MEG_REGISTRATION = {"functionUrl":"https://<project-ref>.supabase.co/functions/v1/register","maxPhotoBytes":10485760,"tiers":[{"id":"early","label":"Early Bird","ghs":200,"usd":50,"start":"2026-08-15","end":"2026-09-30"},{"id":"late","label":"Late Registration","ghs":300,"usd":75,"start":"2026-10-01","end":"2026-10-31"}],"fields":[{"name":"fullName","label":"Full name","type":"text","required":true,"other":false},{"name":"email","label":"Email address","type":"email","required":true,"other":false},{"name":"phone","label":"Phone number","type":"tel","required":true,"other":false},{"name":"instagramHandle","label":"Instagram handle","type":"text","required":true,"other":false},{"name":"tiktokHandle","label":"TikTok handle","type":"text","required":true,"other":false},{"name":"heardFrom","label":"How did you hear about this competition?","type":"radio","required":true,"other":true},{"name":"age","label":"Age","type":"number","required":true,"other":false},{"name":"environmentalView","label":"What are some environmental problems Ghana is facing, and what recommendations do you have for these problems?","type":"textarea","required":true,"other":false},{"name":"contestedBefore","label":"Have you ever contested in any pageant?","type":"radio","required":true,"other":false},{"name":"hasPassport","label":"Do you have a valid passport?","type":"radio","required":true,"other":true},{"name":"standoutQualities","label":"What 3 qualities do you have that stand out for you?","type":"textarea","required":true,"other":false},{"name":"hasSupport","label":"Do you have the necessary support you would need for this competition?","type":"radio","required":true,"other":false},{"name":"bikiniComfort","label":"Are you okay with bikini shoots?","type":"radio","required":false,"other":false},{"name":"occupation","label":"What do you do?","type":"radio","required":true,"other":true},{"name":"photo","label":"Upload a picture of yourself","type":"file","required":true,"other":false},{"name":"hasWhatItTakes","label":"Do you have what it takes to become the next Miss Eco Ghana 2027?","type":"radio","required":true,"other":true}]};</script>
+        <script>window.MEG_REGISTRATION = {"functionUrl":"https://eisqaarydwtsarlghdjs.supabase.co/functions/v1/register","maxPhotoBytes":10485760,"tiers":[{"id":"early","label":"Early Bird","ghs":200,"usd":50,"start":"2026-08-15","end":"2026-09-30"},{"id":"late","label":"Late Registration","ghs":300,"usd":75,"start":"2026-10-01","end":"2026-10-31"}],"fields":[{"name":"fullName","label":"Full name","type":"text","required":true,"other":false},{"name":"email","label":"Email address","type":"email","required":true,"other":false},{"name":"phone","label":"Phone number","type":"tel","required":true,"other":false},{"name":"instagramHandle","label":"Instagram handle","type":"text","required":true,"other":false},{"name":"tiktokHandle","label":"TikTok handle","type":"text","required":true,"other":false},{"name":"heardFrom","label":"How did you hear about this competition?","type":"radio","required":true,"other":true},{"name":"age","label":"Age","type":"number","required":true,"other":false},{"name":"environmentalView","label":"What are some environmental problems Ghana is facing, and what recommendations do you have for these problems?","type":"textarea","required":true,"other":false},{"name":"contestedBefore","label":"Have you ever contested in any pageant?","type":"radio","required":true,"other":false},{"name":"hasPassport","label":"Do you have a valid passport?","type":"radio","required":true,"other":true},{"name":"standoutQualities","label":"What 3 qualities do you have that stand out for you?","type":"textarea","required":true,"other":false},{"name":"hasSupport","label":"Do you have the necessary support you would need for this competition?","type":"radio","required":true,"other":false},{"name":"bikiniComfort","label":"Are you okay with bikini shoots?","type":"radio","required":false,"other":false},{"name":"occupation","label":"What do you do?","type":"radio","required":true,"other":true},{"name":"photo","label":"Upload a picture of yourself","type":"file","required":true,"other":false},{"name":"hasWhatItTakes","label":"Do you have what it takes to become the next Miss Eco Ghana 2027?","type":"radio","required":true,"other":true}]};</script>
 <script>
 /* Miss Eco Ghana — registration form.
  *
@@ -1251,8 +1260,21 @@
             })
             .then(function (r) {
                 if (r.status === 200 && r.body.ok) {
+                    // Payment is the next step: hand off to Hubtel's hosted checkout.
+                    // If the checkout couldn't be created the application is still
+                    // saved — show the success panel and say payment will follow.
+                    if (r.body.checkoutUrl) {
+                        window.location.href = r.body.checkoutUrl;
+                        return;
+                    }
                     form.hidden = true;
                     successBox.hidden = false;
+                    var note = successBox.querySelector('[data-reg-success-note]');
+                    if (note) {
+                        note.textContent = 'We could not start the payment automatically. ' +
+                            'Our team will email you a payment link shortly.';
+                        note.hidden = false;
+                    }
                     successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
@@ -1278,7 +1300,43 @@
             });
     });
 
-    renderWindow();
+    /* ── Coming back from Hubtel ─────────────────────────────────────────────
+     * ?ref=<clientReference>  — they completed (or at least finished) checkout
+     * ?cancelled=1            — they backed out
+     *
+     * IMPORTANT: neither state proves payment. Only the Hubtel callback marks a
+     * row paid, server-side. This is cosmetic copy, nothing more.
+     */
+    function renderReturnState() {
+        var params = new URLSearchParams(window.location.search);
+        var cancelled = params.get('cancelled');
+        var ref = params.get('ref');
+        if (!cancelled && !ref) return false;
+
+        form.hidden = true;
+        successBox.hidden = false;
+
+        var title = successBox.querySelector('.reg-success-title');
+        var bodyEl = successBox.querySelector('.reg-success-body');
+
+        if (cancelled) {
+            if (title) title.textContent = 'Payment cancelled';
+            if (bodyEl) {
+                bodyEl.textContent = 'Your application was saved but payment was not completed. ' +
+                    'You can submit the form again to retry payment.';
+            }
+        } else {
+            if (title) title.textContent = 'Registration received';
+            if (bodyEl) {
+                bodyEl.textContent = 'Thank you for entering Miss Eco Ghana. Once your payment ' +
+                    'clears, our team will be in touch by email with your screening details.';
+            }
+        }
+        successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return true;
+    }
+
+    if (!renderReturnState()) renderWindow();
     wireOtherToggles();
 })();
 

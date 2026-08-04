@@ -228,8 +228,21 @@
             })
             .then(function (r) {
                 if (r.status === 200 && r.body.ok) {
+                    // Payment is the next step: hand off to Hubtel's hosted checkout.
+                    // If the checkout couldn't be created the application is still
+                    // saved — show the success panel and say payment will follow.
+                    if (r.body.checkoutUrl) {
+                        window.location.href = r.body.checkoutUrl;
+                        return;
+                    }
                     form.hidden = true;
                     successBox.hidden = false;
+                    var note = successBox.querySelector('[data-reg-success-note]');
+                    if (note) {
+                        note.textContent = 'We could not start the payment automatically. ' +
+                            'Our team will email you a payment link shortly.';
+                        note.hidden = false;
+                    }
                     successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
@@ -255,6 +268,42 @@
             });
     });
 
-    renderWindow();
+    /* ── Coming back from Hubtel ─────────────────────────────────────────────
+     * ?ref=<clientReference>  — they completed (or at least finished) checkout
+     * ?cancelled=1            — they backed out
+     *
+     * IMPORTANT: neither state proves payment. Only the Hubtel callback marks a
+     * row paid, server-side. This is cosmetic copy, nothing more.
+     */
+    function renderReturnState() {
+        var params = new URLSearchParams(window.location.search);
+        var cancelled = params.get('cancelled');
+        var ref = params.get('ref');
+        if (!cancelled && !ref) return false;
+
+        form.hidden = true;
+        successBox.hidden = false;
+
+        var title = successBox.querySelector('.reg-success-title');
+        var bodyEl = successBox.querySelector('.reg-success-body');
+
+        if (cancelled) {
+            if (title) title.textContent = 'Payment cancelled';
+            if (bodyEl) {
+                bodyEl.textContent = 'Your application was saved but payment was not completed. ' +
+                    'You can submit the form again to retry payment.';
+            }
+        } else {
+            if (title) title.textContent = 'Registration received';
+            if (bodyEl) {
+                bodyEl.textContent = 'Thank you for entering Miss Eco Ghana. Once your payment ' +
+                    'clears, our team will be in touch by email with your screening details.';
+            }
+        }
+        successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return true;
+    }
+
+    if (!renderReturnState()) renderWindow();
     wireOtherToggles();
 })();

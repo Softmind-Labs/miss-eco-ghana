@@ -188,6 +188,7 @@ ${fields}
                     <div class="reg-success" data-reg-success hidden>
                         <h3 class="reg-success-title">Registration received</h3>
                         <p class="reg-success-body">Thank you for entering Miss Eco Ghana. Our team will be in touch by email with your screening details.</p>
+                        <p class="reg-success-note" data-reg-success-note hidden></p>
                     </div>
                 </div>
             </div>

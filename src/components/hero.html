@@ -64,6 +64,9 @@
                 </div>
             </div>
 
-            <img src="assets/hero-2.jpeg" loading="lazy" sizes="(max-width: 1440px) 100vw, 1440px" alt="Miss Eco Ghana" class="hero-bg-img"/>
+            <!-- This is the LCP element. It must NOT be lazy — lazy defers the fetch until
+                 after layout, which is the single biggest delay on the homepage. Paired with
+                 a rel=preload in the shell head. -->
+            <img src="assets/hero-2.jpeg" loading="eager" fetchpriority="high" decoding="async" sizes="(max-width: 1440px) 100vw, 1440px" alt="Miss Eco Ghana" class="hero-bg-img"/>
             <div class="hero-bottom-bg"></div>
         </section>

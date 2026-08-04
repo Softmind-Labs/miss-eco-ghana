@@ -223,6 +223,14 @@
                 color: var(--color--neutral-03);
                 line-height: 1.6;
             }
+            .reg-success-note {
+                margin: 14px 0 0;
+                padding-top: 14px;
+                border-top: 1px solid #cacaca;
+                color: #c0392b;
+                font-size: 0.9rem;
+                line-height: 1.6;
+            }
 
             @media (max-width: 767px) {
                 .reg-page-intro {

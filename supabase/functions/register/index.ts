@@ -12,28 +12,15 @@
 // Secrets: npx supabase secrets set RESEND_API_KEY=... ALLOWED_ORIGIN=... MAIL_FROM=...
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { cors, esc, json, resolveTier, TIERS, type Tier } from '../_shared/config.ts';
+import { layout, row, send } from '../_shared/notify.ts';
+import { initiateCheckout, newClientReference } from '../_shared/hubtel.ts';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-// Overridable via `supabase secrets set NOTIFY_EMAIL=...`. Until a domain is
-// verified in Resend, it will only deliver to the address that owns the Resend
-// account — so during setup this may need to point somewhere else. Comma-separate
-// for multiple recipients.
-const NOTIFY_EMAIL = (Deno.env.get('NOTIFY_EMAIL') ?? 'globalelegancepageantsghana@gmail.com')
-    .split(',')
-    .map((a) => a.trim())
-    .filter(Boolean);
 const BUCKET = 'registration-photos';
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024; // 10 MB, matching the form
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-
-// Kept in sync by hand with src/data/registration.json. The client copy drives
-// what the page displays; this copy is authoritative, because the fee must not
-// depend on the visitor's system clock.
-const TIERS = [
-    { id: 'early', label: 'Early Bird', ghs: 200, usd: 50, start: '2026-08-15', end: '2026-09-30' },
-    { id: 'late', label: 'Late Registration', ghs: 300, usd: 75, start: '2026-10-01', end: '2026-10-31' },
-];
 
 // ─── Field spec ──────────────────────────────────────────────────────────────
 // Drives validation and the notification email, so adding a question is a
@@ -101,30 +88,8 @@ const FIELDS: Field[] = [
 ] as const;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const cors = {
-    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
-    'Access-Control-Allow-Headers': 'content-type, authorization, apikey',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), {
-        status,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-    });
-
-/** Escape before interpolating applicant text into the notification email. */
-const esc = (v: unknown) =>
-    String(v ?? '')
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-/** Which fee tier is open right now? Null means registration is closed. */
-function resolveTier(now: Date) {
-    const today = now.toISOString().slice(0, 10); // YYYY-MM-DD, UTC
-    return TIERS.find((t) => today >= t.start && today <= t.end) ?? null;
-}
+// cors, json, esc and resolveTier now live in ../_shared/config.ts so the
+// callback function uses the identical tier table. Change fees in ONE place.
 
 function validate(values: Record<string, string>) {
     const errors: Record<string, string> = {};
@@ -170,29 +135,22 @@ function validate(values: Record<string, string>) {
     return errors;
 }
 
-function renderEmail(values: Record<string, string>, tier: typeof TIERS[number], id: string, photoUrl: string | null) {
+function renderEmail(values: Record<string, string>, tier: Tier, id: string, photoUrl: string | null) {
     const rows = FIELDS
         .filter((f) => (values[f.name] ?? '').trim())
-        .map((f) => `
-            <tr>
-              <td style="padding:8px 14px;border-bottom:1px solid #eee;vertical-align:top;width:38%;color:#666;font-size:13px;">${esc(f.label)}</td>
-              <td style="padding:8px 14px;border-bottom:1px solid #eee;vertical-align:top;font-size:14px;white-space:pre-wrap;">${esc(values[f.name])}</td>
-            </tr>`)
+        .map((f) => row(f.label, values[f.name]))
         .join('');
 
-    return `
-    <div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:640px;margin:0 auto;">
-      <h2 style="margin:0 0 4px;font-size:20px;">New registration — ${esc(values.fullName)}</h2>
-      <p style="margin:0 0 20px;color:#666;font-size:13px;">
-        ${esc(tier.label)} · ${tier.ghs} GH&#8373; / $${tier.usd} · ref <code>${esc(id)}</code>
-      </p>
-      <table style="border-collapse:collapse;width:100%;">${rows}</table>
-      <p style="margin:24px 0 0;font-size:14px;">
-        ${photoUrl
+    return layout(
+        `New application — ${values.fullName}`,
+        `${esc(tier.label)} · ${tier.ghs} GH&#8373; owed · <strong style="color:#c0392b;">UNPAID</strong> · ref <code>${esc(id)}</code>`,
+        `<table style="border-collapse:collapse;width:100%;">${rows}</table>
+         <p style="margin:24px 0 0;font-size:14px;">
+           ${photoUrl
             ? `<a href="${esc(photoUrl)}" style="color:#2a7;">View submitted photo</a> <span style="color:#999;">(link expires in 30 days — the photo stays in Supabase Storage)</span>`
             : `<span style="color:#999;">Photo uploaded, but the preview link could not be generated. Find it in Supabase Storage.</span>`}
-      </p>
-    </div>`;
+         </p>`,
+    );
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -228,7 +186,20 @@ Deno.serve(async (req) => {
     if (Object.keys(errors).length) return json({ errors }, 400);
 
     // Resolved from the server clock so the fee can't be changed client-side.
-    const tier = resolveTier(new Date());
+    //
+    // Test bypass: lets us exercise the full path (DB, storage, Hubtel, email)
+    // outside the registration window WITHOUT opening the form to the public.
+    // Inert unless TEST_BYPASS_TOKEN is set as a secret, and the caller must send
+    // the matching header. Unset the secret when you're done testing:
+    //     npx supabase secrets unset TEST_BYPASS_TOKEN
+    const bypassToken = Deno.env.get('TEST_BYPASS_TOKEN');
+    const bypassed = !!bypassToken && req.headers.get('x-test-bypass') === bypassToken;
+
+    let tier = resolveTier(new Date());
+    if (!tier && bypassed) {
+        tier = TIERS[0]; // price the test at the early-bird rate
+        console.warn('TEST BYPASS USED — tier gate skipped for this request');
+    }
     if (!tier) return json({ error: 'Registration is not open at the moment.' }, 409);
 
     const supabase = createClient(
@@ -250,60 +221,101 @@ Deno.serve(async (req) => {
         return json({ error: 'Could not upload your photo. Please try again.' }, 500);
     }
 
-    const row: Record<string, unknown> = { photo_path: photoPath, tier: tier.id, fee_ghs: tier.ghs };
-    for (const field of FIELDS) row[field.column] = values[field.name] || null;
-    row.age = Number(values.age);
+    const clientReference = newClientReference(); // 32 chars — Hubtel's hard limit
 
-    const { data, error } = await supabase
+    const record: Record<string, unknown> = {
+        photo_path: photoPath,
+        tier: tier.id,
+        fee_ghs: tier.ghs,
+        client_reference: clientReference,
+        payment_status: 'pending',
+    };
+    for (const field of FIELDS) record[field.column] = values[field.name] || null;
+    record.age = Number(values.age);
+
+    // One entry per person — but an abandoned checkout must NOT lock someone out.
+    // If a row already exists for this email and it hasn't been paid, we overwrite
+    // it with the new answers and issue a fresh checkout. Only a *paid* row blocks.
+    const { data: existing } = await supabase
         .from('registrations')
-        .insert(row)
-        .select('id')
-        .single();
+        .select('id, payment_status, photo_path')
+        .ilike('email', values.email)
+        .maybeSingle();
 
-    if (error) {
-        // Don't leave the orphaned photo behind.
+    let data: { id: string } | null = null;
+
+    if (existing && existing.payment_status === 'paid') {
         await supabase.storage.from(BUCKET).remove([photoPath]);
+        return json({ error: 'A paid registration already exists for that email address.' }, 409);
+    }
 
-        if (error.code === '23505') {
-            return json({ error: 'A registration already exists for that email address.' }, 409);
+    if (existing) {
+        const { data: updated, error: updateError } = await supabase
+            .from('registrations')
+            .update(record)
+            .eq('id', existing.id)
+            .select('id')
+            .single();
+
+        if (updateError) {
+            await supabase.storage.from(BUCKET).remove([photoPath]);
+            console.error('update failed', updateError);
+            return json({ error: 'Could not save your registration. Please try again.' }, 500);
         }
-        console.error('insert failed', error);
-        return json({ error: 'Could not save your registration. Please try again.' }, 500);
+        data = updated;
+        // The replaced photo is now unreferenced.
+        if (existing.photo_path) {
+            await supabase.storage.from(BUCKET).remove([existing.photo_path]);
+        }
+    } else {
+        const { data: inserted, error } = await supabase
+            .from('registrations')
+            .insert(record)
+            .select('id')
+            .single();
+
+        if (error) {
+            await supabase.storage.from(BUCKET).remove([photoPath]); // no orphan photos
+            if (error.code === '23505') {
+                return json({ error: 'A registration already exists for that email address.' }, 409);
+            }
+            console.error('insert failed', error);
+            return json({ error: 'Could not save your registration. Please try again.' }, 500);
+        }
+        data = inserted;
     }
 
-    // Notification is best-effort: the registration is already safely stored, so a
-    // mail failure must not tell the applicant their submission failed.
-    const resendKey = Deno.env.get('RESEND_API_KEY');
-    if (!resendKey) {
-        // Expected before Resend is set up. The registration is saved either way —
-        // read submissions in the Supabase dashboard until notifications are wired.
-        console.log(`registration ${data.id} saved; RESEND_API_KEY unset, no email sent`);
-        return json({ ok: true, id: data.id });
+    const id = data!.id;
+
+    // ── Notify the team that an application arrived, unpaid ──────────────────
+    // Best-effort: the row is already stored, so a mail failure must never tell
+    // the applicant their submission failed.
+    const { data: signed } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(photoPath, 60 * 60 * 24 * 30);
+
+    await send(
+        `New application (UNPAID) — ${values.fullName} (${tier.label})`,
+        renderEmail(values, tier, id, signed?.signedUrl ?? null),
+        values.email,
+    );
+
+    // ── Start the payment ────────────────────────────────────────────────────
+    // A checkout failure is NOT a registration failure. The application is saved;
+    // the client shows a "we'll be in touch about payment" state instead.
+    const checkout = await initiateCheckout({
+        amountGhs: tier.ghs,
+        description: `Miss Eco Ghana registration ${values.fullName}`,
+        clientReference,
+        payeeName: values.fullName,
+        payeeEmail: values.email,
+        payeeMobileNumber: values.phone,
+    });
+
+    if (!checkout) {
+        console.error(`registration ${id} saved but checkout could not be created`);
+        return json({ ok: true, id, checkoutUrl: null });
     }
 
-    try {
-        const { data: signed } = await supabase.storage
-            .from(BUCKET)
-            .createSignedUrl(photoPath, 60 * 60 * 24 * 30);
-
-        const res = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${resendKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                from: Deno.env.get('MAIL_FROM') ?? 'Miss Eco Ghana <onboarding@resend.dev>',
-                to: NOTIFY_EMAIL,
-                reply_to: values.email,
-                subject: `New registration — ${values.fullName} (${tier.label})`,
-                html: renderEmail(values, tier, data.id, signed?.signedUrl ?? null),
-            }),
-        });
-        if (!res.ok) console.error('resend rejected the send', res.status, await res.text());
-    } catch (e) {
-        console.error('resend threw', e);
-    }
-
-    return json({ ok: true, id: data.id });
+    return json({ ok: true, id, checkoutUrl: checkout.checkoutUrl });
 });
