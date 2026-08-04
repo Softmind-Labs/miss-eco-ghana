@@ -10,7 +10,6 @@
         <meta content="width=device-width, initial-scale=1" name="viewport"/>
         <meta content="Webflow" name="generator"/>
         <link href="style.css" rel="stylesheet" type="text/css"/>
-        <link href="src/css/animations.css" rel="stylesheet" type="text/css"/>
         <style>
             @media (min-width: 992px) {
                 html.w-mod-js:not(.w-mod-ix) [data-w-id="19ec17b1-7120-edc2-ea55-fbe8d701610a"] {
@@ -279,9 +278,37 @@
                     object-position: 70% top;
                 }
                 .hero-section {
-                    padding-top: 120px;
-                    padding-bottom: 40px;
+                    height: 88vh;
+                    padding-top: 80px;
+                    padding-bottom: 0;
                 }
+            }
+
+            /* ── Hero text visibility fix for mobile ── */
+            @media (max-width: 479px) {
+                .hero-wrap {
+                    visibility: visible !important;
+                }
+                .hero-title,
+                .banner-para {
+                    opacity: 1 !important;
+                }
+                .hero-bottom-bar {
+                    display: none !important;
+                }
+            }
+
+            /* ── Fix Webflow opacity:0 not animating (winners/Michelle section all screens) ── */
+            .banner-section {
+                opacity: 1 !important;
+            }
+            [data-w-id="winners-heading"] {
+                opacity: 1 !important;
+                display: block !important;
+                max-width: none !important;
+            }
+            [data-w-id="winners-heading"] .section-title-span {
+                padding-left: 0 !important;
             }
 
             /* ── Winners: Michelle card mobile ── */
@@ -307,6 +334,47 @@
                     flex-wrap: wrap !important;
                     gap: 20px !important;
                 }
+            }
+
+
+            /* ── Register CTA on the homepage ──
+               The form itself lives on register.html; these are the only form
+               styles the homepage needs. Rest is in registration.css. */
+            .reg-cta-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 14px 24px;
+                margin: 36px 0 8px;
+            }
+            .reg-cta-link {
+                display: inline-block;
+                text-decoration: none;
+            }
+            /* .why-choose-us-section has no background rule, so this sits on the
+               light body — white text here was invisible. */
+            .reg-cta-note {
+                margin: 0;
+                font-size: 0.85rem;
+                color: var(--color--neutral-03);
+            }
+
+            .reg-submit {
+                padding: 15px 38px;
+                font-family: inherit;
+                font-size: 0.85rem;
+                font-weight: 600;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #0a0a0a;
+                background: #b3fc6a;
+                border: none;
+                border-radius: 40px;
+                cursor: pointer;
+                transition: opacity 0.18s;
+            }
+            .reg-submit:hover {
+                opacity: 0.88;
             }
 
         </style>
@@ -347,7 +415,7 @@
             <div class="w-layout-blockcontainer container w-container">
                 <div data-w-id="050aa1aa-a3f6-633c-19aa-236dfe36cca8" data-animation="default" data-collapse="medium" data-duration="400" data-easing="ease" data-easing2="ease" role="banner" class="navbar w-nav">
                     <div class="navbar-wrapper">
-                        <a href="/" aria-current="page" class="navbar-brand-header w-nav-brand w--current">
+                        <a href="index.html" class="navbar-brand-header w-nav-brand">
                             <img loading="lazy" src="assets/logo-final.png" alt="Miss Eco Ghana" class="navbar-brand-header-logo"/>
                         </a>
                         <div class="menu-button-wrap">
@@ -369,7 +437,7 @@
                                         <div class="menu-dot-wrap">
                                             <div class="menu-dot"></div>
                                         </div>
-                                        <a href="#register" class="nav-link w-nav-link">REGISTER</a>
+                                        <a href="register.html" class="nav-link w-nav-link">REGISTER</a>
                                     </li>
                                     <li data-w-id="050aa1aa-a3f6-633c-19aa-236dfe36ccde" class="list-item">
                                         <div class="menu-dot-wrap">
@@ -441,7 +509,7 @@
                             <div class="hero-bottom-item right">
                                 <div class="banner-bottom-item">
                                     <div class="banner-bottom-text">Registration</div>
-                                    <div class="banner-bottom-text">200 GH₵ / $50</div>
+                                    <div class="banner-bottom-text">from 200 GH₵ / $50</div>
                                 </div>
                                 <div class="banner-bottom-item">
                                     <div class="banner-bottom-text">Online</div>
@@ -449,7 +517,7 @@
                                 </div>
                             </div>
                         </div>
-                        <a data-w-id="9005b2c0-bda8-dd5f-5329-212459f5d60e" href="#register" class="hero-cta-block w-inline-block">
+                        <a data-w-id="9005b2c0-bda8-dd5f-5329-212459f5d60e" href="register.html" class="hero-cta-block w-inline-block">
                             <div class="hero-cta-left">
                                 <img src="https://cdn.prod.website-files.com/6868cd37a164c17aef4e0971/6868cd37a164c17aef4e0d8f_ticket-02.svg" loading="lazy" alt="Icon"/>
                             </div>
@@ -724,7 +792,7 @@
         </section>
 
 <!-- DATA:contestants-disabled -->
-        <section class="why-choose-us-section section-padding-top">
+        <section class="why-choose-us-section section-padding-top" id="register">
             <div class="w-layout-blockcontainer container w-container">
                 <div class="section-wrap">
                     <div class="section-title-wrap">
@@ -762,12 +830,16 @@
                             </div>
                         </div>
                     </div>
+                    <div class="reg-cta-row">
+                        <a href="register.html" class="reg-submit reg-cta-link">Register to compete</a>
+                        <p class="reg-cta-note">200 GH&#8373; / $50 from 15 August to 30 September &middot; 300 GH&#8373; / $75 from 1 October to 31 October</p>
+                    </div>
                     <img class="why-choose-us-img" src="assets/finalists.jpeg" alt="Image" style="opacity:0" sizes="100vw" data-w-id="44328482-4905-f66f-b063-fd09c071914d" loading="lazy" />
                 </div>
             </div>
         </section>
 
-        <section class="schedule-section section-padding-top">
+        <section class="schedule-section section-padding-top" id="schedule">
             <div class="w-layout-blockcontainer container w-container">
                 <div class="schedule-wrap-1">
                     <div class="schedule-left-block">
@@ -981,7 +1053,7 @@
             </div>
         </section>
 
-        <section class="faq-section section-padding">
+        <section class="faq-section section-padding" id="faqs">
             <div class="w-layout-blockcontainer container w-container">
                 <div class="faq-wrap-2">
                     <div class="section-title-wrap faq">
@@ -1007,7 +1079,7 @@
                                 </div>
                             </div>
                             <nav class="faq-item-content w-dropdown-list">
-                                <p class="faq-item-content-p">Registration costs 200 GH&#8373; for Ghanaians and $50 for Ghanaians living abroad.</p>
+                                <p class="faq-item-content-p">Registration is tiered. Early bird, from 15th August to 30th September, costs 200 GH&#8373; for Ghanaians and $50 for Ghanaians living abroad. Late registration, from 1st October to 31st October, costs 300 GH&#8373; and $75 respectively.</p>
                             </nav>
                         </div>
                         <div data-delay="0" data-hover="false" data-w-id="ae70eff3-e8c8-8d75-2d4b-e103a803edc5" class="faq-item w-dropdown">
@@ -1080,7 +1152,7 @@
                     </div>
                     <div data-w-id="865f2b1f-a375-292f-35c3-df327c340353" class="cta-right-block">
                         <p class="cta-para">Step into a journey of purpose, confidence, and impact. Register now to be part of Miss Eco Ghana and represent a voice for sustainability and positive change.</p>
-                        <a data-w-id="d7c6074b-1423-5b6e-a07b-893556ac1ee4" href="/#" class="button style-2 w-inline-block">
+                        <a data-w-id="d7c6074b-1423-5b6e-a07b-893556ac1ee4" href="register.html" class="button style-2 w-inline-block">
                             <div class="button-area">
                                 <div class="button-text">Register Now</div>
                                 <div class="button-icon-wrapper">

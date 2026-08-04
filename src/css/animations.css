@@ -322,3 +322,44 @@
                     gap: 20px !important;
                 }
             }
+
+
+            /* ── Register CTA on the homepage ──
+               The form itself lives on register.html; these are the only form
+               styles the homepage needs. Rest is in registration.css. */
+            .reg-cta-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 14px 24px;
+                margin: 36px 0 8px;
+            }
+            .reg-cta-link {
+                display: inline-block;
+                text-decoration: none;
+            }
+            /* .why-choose-us-section has no background rule, so this sits on the
+               light body — white text here was invisible. */
+            .reg-cta-note {
+                margin: 0;
+                font-size: 0.85rem;
+                color: var(--color--neutral-03);
+            }
+
+            .reg-submit {
+                padding: 15px 38px;
+                font-family: inherit;
+                font-size: 0.85rem;
+                font-weight: 600;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #0a0a0a;
+                background: #b3fc6a;
+                border: none;
+                border-radius: 40px;
+                cursor: pointer;
+                transition: opacity 0.18s;
+            }
+            .reg-submit:hover {
+                opacity: 0.88;
+            }
