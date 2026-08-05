@@ -202,6 +202,20 @@ Deno.serve(async (req) => {
     }
     if (!tier) return json({ error: 'Registration is not open at the moment.' }, 409);
 
+    // Test-only amount override, e.g. charge 1 GHS instead of 200 while testing:
+    //     npx supabase secrets set TEST_AMOUNT_GHS=1
+    //     npx supabase secrets unset TEST_AMOUNT_GHS      <-- REMEMBER THIS
+    //
+    // This deliberately overrides BOTH the amount sent to Hubtel and the fee_ghs
+    // stored on the row. They must move together: the callback settles only if the
+    // payment covers the stored fee, so charging 1 while storing 200 would make
+    // every test payment look like an underpayment and never settle.
+    const override = Number(Deno.env.get('TEST_AMOUNT_GHS') ?? '');
+    const chargeGhs = Number.isFinite(override) && override > 0 ? override : tier.ghs;
+    if (chargeGhs !== tier.ghs) {
+        console.warn(`TEST_AMOUNT_GHS ACTIVE — charging ${chargeGhs} instead of ${tier.ghs}`);
+    }
+
     const supabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -226,7 +240,7 @@ Deno.serve(async (req) => {
     const record: Record<string, unknown> = {
         photo_path: photoPath,
         tier: tier.id,
-        fee_ghs: tier.ghs,
+        fee_ghs: chargeGhs,
         client_reference: clientReference,
         payment_status: 'pending',
     };
@@ -304,7 +318,7 @@ Deno.serve(async (req) => {
     // A checkout failure is NOT a registration failure. The application is saved;
     // the client shows a "we'll be in touch about payment" state instead.
     const checkout = await initiateCheckout({
-        amountGhs: tier.ghs,
+        amountGhs: chargeGhs,
         description: `Miss Eco Ghana registration ${values.fullName}`,
         clientReference,
         payeeName: values.fullName,
