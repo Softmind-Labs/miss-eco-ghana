@@ -270,6 +270,11 @@
                 height: 5px;
             }
 
+            /* Note: the mobile nav-drawer REGISTER button is styled at the end of
+               style.css, not here. animations.css is inlined only into the generated
+               pages, and about.html doesn't load it — style.css is the one stylesheet
+               all three pages share. */
+
             /* ── Hero image mobile fix ── */
             .hero-bg-img {
                 object-fit: cover;
@@ -446,6 +451,13 @@
                                             <div class="menu-dot"></div>
                                         </div>
                                         <a href="#faqs" class="nav-link w-nav-link">FAQs</a>
+                                    </li>
+                                    <!-- Mobile-only CTA. The desktop REGISTER button
+                                         (.navbar-button, below) is hidden under 992px by
+                                         style.css, so without this the primary action
+                                         disappears on phones entirely. -->
+                                    <li class="list-item nav-cta-item">
+                                        <a href="register.html" class="nav-cta-button">REGISTER</a>
                                     </li>
                                 </ul>
                             </nav>

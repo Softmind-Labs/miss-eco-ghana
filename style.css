@@ -8689,3 +8689,51 @@ blockquote {
     grid-column: span 1 / span 1;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CUSTOM ADDITIONS — not from the Webflow export.
+   These live here rather than in src/css/animations.css because animations.css is
+   inlined only into the generated pages (index.html, register.html). about.html is
+   hand-maintained and loads style.css only, so shared chrome must be defined here.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* REGISTER CTA inside the mobile nav drawer.
+   .navbar-button is hidden below 992px (see the max-width:991px block above), so
+   without this the primary action disappears entirely on phones. This item sits
+   inside the drawer and appears exactly where the desktop button vanishes. */
+.nav-cta-item {
+  display: none;
+}
+
+@media screen and (max-width: 991px) {
+  .nav-cta-item {
+    width: 100%;
+    margin-top: 14px;
+    padding-top: 16px;
+    padding-left: 0;
+    border-top: 1px solid #0000001f;
+    display: block;
+  }
+
+  .nav-cta-button {
+    width: 100%;
+    color: #0a0a0a;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    background-color: #b3fc6a;
+    border-radius: 30px;
+    padding: 14px 20px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    display: block;
+  }
+
+  .nav-cta-button:hover,
+  .nav-cta-button:active {
+    color: #0a0a0a;
+    opacity: .9;
+  }
+}

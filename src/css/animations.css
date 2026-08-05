@@ -255,6 +255,11 @@
                 height: 5px;
             }
 
+            /* Note: the mobile nav-drawer REGISTER button is styled at the end of
+               style.css, not here. animations.css is inlined only into the generated
+               pages, and about.html doesn't load it — style.css is the one stylesheet
+               all three pages share. */
+
             /* ── Hero image mobile fix ── */
             .hero-bg-img {
                 object-fit: cover;
