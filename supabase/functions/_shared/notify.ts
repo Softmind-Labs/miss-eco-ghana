@@ -13,7 +13,7 @@ import { esc } from './config.ts';
 /** Comma-separate NOTIFY_EMAIL for multiple recipients. Until a domain is verified
  *  in Resend, it will ONLY deliver to the address that owns the Resend account. */
 const recipients = () =>
-    (Deno.env.get('NOTIFY_EMAIL') ?? 'globalelegancepageantsghana@gmail.com')
+    (Deno.env.get('NOTIFY_EMAIL') ?? 'dedoodonatus@gmail.com')
         .split(',').map((a) => a.trim()).filter(Boolean);
 
 /** Returns true only on a confirmed 200 from Resend. */
