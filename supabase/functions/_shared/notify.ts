@@ -33,7 +33,7 @@ export async function send(
             method: 'POST',
             headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                from: Deno.env.get('MAIL_FROM') ?? 'Miss Eco Ghana <@send.missecoghana.com>',
+                from: Deno.env.get('MAIL_FROM') ?? 'Miss Eco Ghana <noreply@send.missecoghana.com>',
                 to: recipients(),
                 reply_to: replyTo,
                 subject,
