@@ -22,6 +22,23 @@ export const newClientReference = () => crypto.randomUUID().replace(/-/g, '');
 export const safeDescription = (s: string, max = 100) =>
     s.replace(/[^A-Za-z0-9 .\-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 
+/** Normalizes Ghanaian phone numbers to standard 10-digit format (024XXXXXXX)
+ *  so Hubtel and telco aggregators route MoMo debit prompts properly. */
+export const normalizePhone = (raw?: string): string | undefined => {
+    if (!raw) return undefined;
+    const digits = raw.replace(/\D/g, '');
+    if (digits.startsWith('233') && digits.length === 12) {
+        return '0' + digits.slice(3);
+    }
+    if (digits.length === 10 && digits.startsWith('0')) {
+        return digits;
+    }
+    if (digits.length === 9) {
+        return '0' + digits;
+    }
+    return digits || undefined;
+};
+
 const auth = () => {
     const id = Deno.env.get('HUBTEL_CLIENT_ID') ?? '';
     const secret = Deno.env.get('HUBTEL_CLIENT_SECRET') ?? '';
@@ -54,6 +71,8 @@ export async function initiateCheckout(opts: {
         return null;
     }
 
+    const normalizedPhone = normalizePhone(opts.payeeMobileNumber);
+
     const body = {
         // Two decimal places, in cedis. Not minor units.
         totalAmount: Number(opts.amountGhs.toFixed(2)),
@@ -65,10 +84,11 @@ export async function initiateCheckout(opts: {
         clientReference: opts.clientReference,
         payeeName: opts.payeeName ? safeDescription(opts.payeeName, 60) : undefined,
         payeeEmail: opts.payeeEmail,
-        payeeMobileNumber: opts.payeeMobileNumber,
+        payeeMobileNumber: normalizedPhone,
     };
 
     try {
+        console.log(`[hubtel] Initiating checkout for ref: ${opts.clientReference}, amount: ${body.totalAmount} GHS, phone: ${normalizedPhone || 'none'}`);
         const res = await fetch(INITIATE_URL, {
             method: 'POST',
             headers: { Authorization: auth(), 'Content-Type': 'application/json' },

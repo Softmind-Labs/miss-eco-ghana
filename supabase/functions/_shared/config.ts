@@ -18,16 +18,39 @@ export function resolveTier(now: Date): Tier | null {
     return TIERS.find((t) => today >= t.start && today <= t.end) ?? null;
 }
 
-export const cors = {
-    'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? '*',
-    'Access-Control-Allow-Headers': 'content-type, authorization, apikey',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+export function corsHeaders(reqOrOrigin?: Request | string) {
+    const origin = typeof reqOrOrigin === 'string'
+        ? reqOrOrigin
+        : (reqOrOrigin?.headers.get('origin') ?? '');
 
-export const json = (body: unknown, status = 200) =>
+    const configured = Deno.env.get('ALLOWED_ORIGIN') ?? '*';
+    const allowedList = configured.split(',').map((s) => s.trim()).filter(Boolean);
+
+    let allowOrigin = configured;
+    if (configured === '*' || allowedList.includes(origin)) {
+        allowOrigin = origin || '*';
+    } else if (
+        origin.startsWith('http://localhost') ||
+        origin.startsWith('http://127.0.0.1')
+    ) {
+        allowOrigin = origin; // auto-allow local dev servers (Live Server, Vite, etc.)
+    } else if (allowedList.length > 0) {
+        allowOrigin = allowedList[0];
+    }
+
+    return {
+        'Access-Control-Allow-Origin': allowOrigin,
+        'Access-Control-Allow-Headers': 'content-type, authorization, apikey, x-test-bypass',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    };
+}
+
+export const cors = corsHeaders();
+
+export const json = (body: unknown, status = 200, req?: Request) =>
     new Response(JSON.stringify(body), {
         status,
-        headers: { ...cors, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
 
 /** Escape before interpolating applicant-supplied text into an HTML email. */

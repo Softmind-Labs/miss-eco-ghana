@@ -12,7 +12,7 @@
 // Secrets: npx supabase secrets set RESEND_API_KEY=... ALLOWED_ORIGIN=... MAIL_FROM=...
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { cors, esc, json, resolveTier, TIERS, type Tier } from '../_shared/config.ts';
+import { cors, corsHeaders, esc, json, resolveTier, TIERS, type Tier } from '../_shared/config.ts';
 import { layout, row, send } from '../_shared/notify.ts';
 import { initiateCheckout, newClientReference } from '../_shared/hubtel.ts';
 
@@ -156,8 +156,9 @@ function renderEmail(values: Record<string, string>, tier: Tier, id: string, pho
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
-    if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
-    if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+    const resJson = (body: unknown, status = 200) => json(body, status, req);
+    if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) });
+    if (req.method !== 'POST') return resJson({ error: 'Method not allowed' }, 405);
 
     let form: FormData;
     try {
@@ -183,7 +184,7 @@ Deno.serve(async (req) => {
         errors.photo = 'Photo must be a JPG, PNG, WEBP or HEIC image.';
     }
 
-    if (Object.keys(errors).length) return json({ errors }, 400);
+    if (Object.keys(errors).length) return resJson({ errors }, 400);
 
     // Resolved from the server clock so the fee can't be changed client-side.
     //
@@ -200,7 +201,7 @@ Deno.serve(async (req) => {
         tier = TIERS[0]; // price the test at the early-bird rate
         console.warn('TEST BYPASS USED — tier gate skipped for this request');
     }
-    if (!tier) return json({ error: 'Registration is not open at the moment.' }, 409);
+    if (!tier) return resJson({ error: 'Registration is not open at the moment.' }, 409);
 
     // Test-only amount override, e.g. charge 1 GHS instead of 200 while testing:
     //     npx supabase secrets set TEST_AMOUNT_GHS=1
@@ -232,7 +233,7 @@ Deno.serve(async (req) => {
 
     if (uploadError) {
         console.error('photo upload failed', uploadError);
-        return json({ error: 'Could not upload your photo. Please try again.' }, 500);
+        return resJson({ error: 'Could not upload your photo. Please try again.' }, 500);
     }
 
     const clientReference = newClientReference(); // 32 chars — Hubtel's hard limit
@@ -260,7 +261,7 @@ Deno.serve(async (req) => {
 
     if (existing && existing.payment_status === 'paid') {
         await supabase.storage.from(BUCKET).remove([photoPath]);
-        return json({ error: 'A paid registration already exists for that email address.' }, 409);
+        return resJson({ error: 'A paid registration already exists for that email address.' }, 409);
     }
 
     if (existing) {
@@ -274,7 +275,7 @@ Deno.serve(async (req) => {
         if (updateError) {
             await supabase.storage.from(BUCKET).remove([photoPath]);
             console.error('update failed', updateError);
-            return json({ error: 'Could not save your registration. Please try again.' }, 500);
+            return resJson({ error: 'Could not save your registration. Please try again.' }, 500);
         }
         data = updated;
         // The replaced photo is now unreferenced.
@@ -291,10 +292,10 @@ Deno.serve(async (req) => {
         if (error) {
             await supabase.storage.from(BUCKET).remove([photoPath]); // no orphan photos
             if (error.code === '23505') {
-                return json({ error: 'A registration already exists for that email address.' }, 409);
+                return resJson({ error: 'A registration already exists for that email address.' }, 409);
             }
             console.error('insert failed', error);
-            return json({ error: 'Could not save your registration. Please try again.' }, 500);
+            return resJson({ error: 'Could not save your registration. Please try again.' }, 500);
         }
         data = inserted;
     }
@@ -328,8 +329,8 @@ Deno.serve(async (req) => {
 
     if (!checkout) {
         console.error(`registration ${id} saved but checkout could not be created`);
-        return json({ ok: true, id, checkoutUrl: null });
+        return resJson({ ok: true, id, checkoutUrl: null });
     }
 
-    return json({ ok: true, id, checkoutUrl: checkout.checkoutUrl });
+    return resJson({ ok: true, id, checkoutUrl: checkout.checkoutUrl });
 });

@@ -24,29 +24,41 @@ export async function send(
 ): Promise<boolean> {
     const key = Deno.env.get('RESEND_API_KEY');
     if (!key) {
-        console.log(`RESEND_API_KEY unset — skipping email: ${subject}`);
+        console.warn(`[notify] RESEND_API_KEY unset in Supabase secrets — skipping email: "${subject}"`);
         return false;
     }
 
+    const to = recipients();
+    const from = Deno.env.get('MAIL_FROM') ?? 'Miss Eco Ghana <noreply@missecoghana.com>';
+
     try {
+        console.log(`[notify] Attempting to send email via Resend to ${JSON.stringify(to)} from "${from}" with subject: "${subject}"`);
         const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                from: Deno.env.get('MAIL_FROM') ?? 'Miss Eco Ghana <noreply@missecoghana.com>',
-                to: recipients(),
+                from,
+                to,
                 reply_to: replyTo,
                 subject,
                 html,
             }),
         });
+
         if (!res.ok) {
-            console.error('resend rejected the send', res.status, await res.text());
+            const errorText = await res.text();
+            console.error(`[notify] Resend rejected the send (HTTP ${res.status}):`, errorText);
+            if (res.status === 403 || errorText.includes('domain') || errorText.includes('verified')) {
+                console.error('[notify] HINT: If domain is not verified in Resend, either verify the domain in Resend DNS settings, or set Supabase secret MAIL_FROM="Miss Eco Ghana <onboarding@resend.dev>" for testing.');
+            }
             return false;
         }
+
+        const data = await res.json().catch(() => ({}));
+        console.log(`[notify] Email sent successfully via Resend. ID:`, data?.id ?? 'ok');
         return true;
     } catch (e) {
-        console.error('resend threw', e);
+        console.error('[notify] Exception thrown while sending email via Resend:', e);
         return false;
     }
 }
