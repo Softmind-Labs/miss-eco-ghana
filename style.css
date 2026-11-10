@@ -8737,3 +8737,21 @@ blockquote {
     opacity: .9;
   }
 }
+
+/* ── Footer contact links: phone & WhatsApp ── */
+.contact-info-phone,
+.contact-info-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+}
+.contact-info-whatsapp {
+  color: #25d366;
+}
+.contact-info-whatsapp:hover {
+  opacity: 0.85;
+}
+.contact-info-phone:hover {
+  opacity: 0.85;
+}
+

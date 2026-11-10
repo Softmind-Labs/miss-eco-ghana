@@ -368,3 +368,125 @@
             .reg-submit:hover {
                 opacity: 0.88;
             }
+
+            /* ── Large Auto-Scrolling Carousel of Partner Showcase Cards ── */
+            .partner-carousel-wrap {
+                position: relative;
+                width: 100%;
+                overflow: hidden;
+                padding: 24px 0 36px;
+                margin-top: 40px;
+                -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+                mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+            }
+            .partner-carousel-track {
+                display: flex;
+                width: max-content;
+                animation: partnerMarquee 36s linear infinite;
+                will-change: transform;
+            }
+            .partner-carousel-track:hover {
+                animation-play-state: paused;
+            }
+            .partner-carousel-group {
+                display: flex;
+                gap: 28px;
+                padding-right: 28px;
+                flex-shrink: 0;
+            }
+            .partner-card {
+                flex: 0 0 280px;
+                width: 280px;
+                height: 280px;
+                aspect-ratio: 1 / 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+                text-decoration: none;
+                transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+                background: #fdfdfd;
+            }
+            .partner-card:hover {
+                transform: translateY(-8px) scale(1.02);
+                box-shadow: 0 24px 50px rgba(0, 0, 0, 0.14);
+            }
+            .partner-card-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            @keyframes partnerMarquee {
+                0% {
+                    transform: translate3d(0, 0, 0);
+                }
+                100% {
+                    transform: translate3d(-50%, 0, 0);
+                }
+            }
+
+            /* Tablet */
+            @media (max-width: 991px) {
+                .partner-carousel-wrap {
+                    padding: 20px 0 30px;
+                    margin-top: 32px;
+                }
+                .partner-carousel-group {
+                    gap: 22px;
+                    padding-right: 22px;
+                }
+                .partner-card {
+                    flex: 0 0 240px;
+                    width: 240px;
+                    height: 240px;
+                    border-radius: 14px;
+                }
+                .partner-carousel-track {
+                    animation-duration: 30s;
+                }
+            }
+
+            /* Mobile */
+            @media (max-width: 479px) {
+                .partner-carousel-wrap {
+                    padding: 16px 0 24px;
+                    margin-top: 24px;
+                    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+                    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+                }
+                .partner-carousel-group {
+                    gap: 16px;
+                    padding-right: 16px;
+                }
+                .partner-card {
+                    flex: 0 0 190px;
+                    width: 190px;
+                    height: 190px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+                }
+                .partner-carousel-track {
+                    animation-duration: 24s;
+                }
+            }
+
+            /* ── Footer contact links: phone & WhatsApp ── */
+            .contact-info-phone,
+            .contact-info-whatsapp {
+                display: inline-flex;
+                align-items: center;
+                margin-top: 8px;
+            }
+            .contact-info-whatsapp {
+                color: #25d366;
+            }
+            .contact-info-whatsapp:hover {
+                opacity: 0.85;
+            }
+            .contact-info-phone:hover {
+                opacity: 0.85;
+            }
